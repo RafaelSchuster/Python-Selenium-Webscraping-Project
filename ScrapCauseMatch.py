@@ -4,6 +4,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
+import webbrowser
+import time
+import json
 from natsort import humansorted
 
 PATH = "C:\Program Files (x86)\chromedriver.exe"
@@ -49,6 +52,9 @@ def campaign_loop(start, end, button_action=default_pass):
                 '#container > div:nth-child(%s) > a > div > div > img' % (str(i)))
             campaign.click()
             try:
+                donors_tab = element_by_css_selector(
+                    '#content-donors-tab')
+                donors_tab.click()
                 selection = element_by_css_selector(
                     '#donors-tab > div.rdp-data-container > div > div.rdp-sn-container.row > div.tc-filter-container.col-sm-3 > div')
                 selection.click()
@@ -62,8 +68,6 @@ def campaign_loop(start, end, button_action=default_pass):
                         '#vm-mdd > div > div > button')
 
                     out_click.click()
-                    donors_tab = element_by_css_selector('#content-donors-tab')
-                    donors_tab.click()
                     selection = element_by_css_selector(
                         '#donors-tab > div.rdp-data-container > div > div.rdp-sn-container.row > div.tc-filter-container.col-sm-3 > div')
 
@@ -73,9 +77,22 @@ def campaign_loop(start, end, button_action=default_pass):
                         '#donors-tab > div.rdp-data-container > div > div.rdp-sn-container.row > div.tc-filter-container.col-sm-3 > div > div > a:nth-child(2)')
                     option.click()
                 except:
-                    driver.back()
-                    button_action()
-                    continue
+                    try:
+                        donors_tab = element_by_css_selector(
+                            '#content-donors-tab')
+                        donors_tab.click()
+                        selection = element_by_css_selector(
+                            '#donors-tab > div.rdp-data-container > div > div.rdp-sn-container.row > div.tc-filter-container.col-sm-3 > div')
+
+                        selection.click()
+
+                        option = element_by_css_selector(
+                            '#donors-tab > div.rdp-data-container > div > div.rdp-sn-container.row > div.tc-filter-container.col-sm-3 > div > div > a:nth-child(2)')
+                        option.click()
+                    except:
+                        driver.back()
+                        button_action()
+                        continue
             try:
                 data_storing_with_for_loop(1)
                 driver.back()
@@ -85,8 +102,19 @@ def campaign_loop(start, end, button_action=default_pass):
                 driver.back()
                 button_action()
         driver.back()
+        button_action()
     except:
-        print('Nope')
+        print('Final Result For Now:')
+        print(humansorted(data_dict.items(), reverse=True))
+        data = humansorted(data_dict.items(), reverse=True)
+        json_string = json.dumps(data, ensure_ascii=False)
+        time.sleep(3)
+        html_content_end = f"<html><head></head><h1>Scrapping Results</h1><body>{json_string}</body></html>"
+        with open("index.html", "w", encoding='utf-8') as html_file:
+            html_file.write(html_content_end)
+            print('HTML file created successfully!')
+        time.sleep(5)
+        webbrowser.open_new_tab("index.html")
 
 
 def israel_button():
@@ -124,7 +152,7 @@ number_more_campaigns = len(driver.find_elements_by_class_name('more'))
 israel_start = number_trending_campaigns + 1
 israel_end = number_trending_campaigns + number_israel_campaigns
 
-usa_start = number_trending_campaigns + number_israel_campaigns
+usa_start = number_trending_campaigns + number_israel_campaigns + 1
 usa_end = number_trending_campaigns + \
     number_israel_campaigns + number_usa_campaigns
 
@@ -139,29 +167,54 @@ panama_end = number_trending_campaigns + number_israel_campaigns + \
     number_usa_campaigns + number_uk_campaigns + number_panama_campaigns
 
 more_start = number_trending_campaigns + number_israel_campaigns + \
-    number_usa_campaigns + number_uk_campaigns + number_panama_campaigns + 1,
+    number_usa_campaigns + number_uk_campaigns + number_panama_campaigns + 1
 more_end = number_trending_campaigns + number_israel_campaigns + number_usa_campaigns + \
     number_uk_campaigns + number_panama_campaigns + number_more_campaigns
+
+print(number_trending_campaigns, number_israel_campaigns, number_usa_campaigns,
+      number_uk_campaigns, number_panama_campaigns, number_more_campaigns)
 
 campaign_loop(1, number_trending_campaigns)
 print(humansorted(data_dict.items(), reverse=True))
 
-israel_button()
-campaign_loop(israel_start,
-              israel_end, israel_button)
+driver.get("https://www.causematch.com/")
 
 usa_button()
 campaign_loop(usa_start, usa_end, usa_button)
 print(humansorted(data_dict.items(), reverse=True))
 
+driver.get("https://www.causematch.com/")
+
 uk_button()
 campaign_loop(uk_start, uk_end, uk_button)
 print(humansorted(data_dict.items(), reverse=True))
+
+driver.get("https://www.causematch.com/")
 
 panama_button()
 campaign_loop(panama_start, panama_end, panama_button)
 print(humansorted(data_dict.items(), reverse=True))
 
+driver.get("https://www.causematch.com/")
+
 more_button()
+print(more_start)
 campaign_loop(more_start, more_end, more_button)
 print(humansorted(data_dict.items(), reverse=True))
+
+driver.get("https://www.causematch.com/")
+
+israel_button()
+campaign_loop(israel_start,
+              israel_end, israel_button)
+print(humansorted(data_dict.items(), reverse=True))
+
+time.sleep(3)
+data = humansorted(data_dict.items(), reverse=True)
+json_string = json.dumps(data, ensure_ascii=False)
+html_content_end = f"<html><head></head><h1>Scrapping Results</h1><body>{json_string}</body></html>"
+with open("index.html", "w", encoding='utf-8') as html_file:
+    html_file.write(html_content_end)
+    print('HTML file created successfully!')
+time.sleep(5)
+webbrowser.open_new_tab("index.html")
